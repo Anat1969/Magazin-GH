@@ -58,7 +58,7 @@ export default function TopBar({ route, session, onToast }) {
         <nav className="topbar__nav" aria-label="ניווט ראשי">
           <a href="#/" className={active('home')}>שער</a>
           <a href="#/index" className={active('index')}>גיליונות</a>
-          {session.isAdmin && <a href="#/new" className={active('compose')}>כתיבה</a>}
+          <a href="#/new" className={`nav-editor ${active('compose')}`}>עורך מגזין</a>
         </nav>
 
         <div className="owner" ref={wrapRef}>
