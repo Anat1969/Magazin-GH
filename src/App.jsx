@@ -7,12 +7,10 @@ import IndexPage from './components/IndexPage';
 import TopBar from './components/TopBar';
 import { useArticles, useRoute } from './data';
 
-// Open magazine: no login, every visitor can write and edit (Anat's choice).
-const OPEN = { ready: true, isAdmin: true, user: null };
+
 
 export default function App() {
   const route = useRoute();
-  const session = OPEN;
   const { articles, status, reload } = useArticles();
   const [toast, setToast] = useState('');
 
@@ -32,14 +30,14 @@ export default function App() {
   const key = route.page + (route.id || '') + (route.rootId || '') + (route.topic || '');
 
   let page;
-  if (route.page === 'article') page = <ArticlePage id={route.id} articles={visible} status={status} session={session} onToast={onToast} reload={reload} />;
-  else if (route.page === 'index') page = <IndexPage articles={visible} status={status} isAdmin={session.isAdmin} topic={route.topic} />;
-  else if (route.page === 'compose') page = <Compose rootId={route.rootId} articles={visible} session={session} onToast={onToast} reload={reload} />;
-  else page = <Home articles={published} status={status} />;
+  if (route.page === 'article') page = <ArticlePage id={route.id} articles={visible} status={status} onToast={onToast} reload={reload} />;
+  else if (route.page === 'index') page = <IndexPage articles={visible} status={status} isAdmin topic={route.topic} />;
+  else if (route.page === 'compose') page = <Compose rootId={route.rootId} articles={visible} onToast={onToast} reload={reload} />;
+  else page = <Home articles={published} status={status} onToast={onToast} />;
 
   return (
     <>
-      <TopBar route={route} session={session} onToast={onToast} />
+      <TopBar route={route} onToast={onToast} />
       <AnimatePresence mode="wait">
         <motion.main key={key} className="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
           {page}

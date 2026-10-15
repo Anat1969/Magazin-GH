@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDate, go, issueNumbers, readingMinutes, seriesOf } from '../data';
 import { supabase, TABLE } from '../supabase';
 import Cover from './Cover';
+import ReadAloud from './ReadAloud';
 
 function Editable({ as: Tag = 'p', editing, value, onChange, className }) {
   if (!editing) return <Tag className={className}>{value}</Tag>;
@@ -18,7 +19,7 @@ function Editable({ as: Tag = 'p', editing, value, onChange, className }) {
   );
 }
 
-export default function ArticlePage({ id, articles, status, session, onToast, reload }) {
+export default function ArticlePage({ id, articles, status, onToast, reload }) {
   const article = articles.find((a) => a.id === id);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(null);
@@ -125,6 +126,7 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
             <span>{formatDate(article.created_at)}</span>
             <span>{readingMinutes(article)} דקות קריאה</span>
             {article.published === false && <span>מוסתרת</span>}
+            {!editing && <ReadAloud title={article.title} subtitle={article.subtitle} onToast={onToast} />}
           </div>
         </motion.div>
       </header>
@@ -154,9 +156,31 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
             </nav>
           )}
           <div className="aside__actions">
-            <button type="button" className="link-btn" onClick={share}>שיתוף</button>
-            <button type="button" className="link-btn" onClick={() => window.print()}>הדפסה או PDF</button>
+            {editing ? (
+              <>
+                <button type="button" className="link-btn link-btn--accent" onClick={save} disabled={busy}>שמירת השינויים</button>
+                <button type="button" className="link-btn" onClick={() => setEditing(false)} disabled={busy}>ביטול</button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="link-btn" onClick={share}>שיתוף</button>
+                <button type="button" className="link-btn" onClick={() => window.print()}>הדפסה או PDF</button>
+                <button type="button" className="link-btn" onClick={startEdit}>עריכת הטקסט</button>
+                <button type="button" className="link-btn" onClick={togglePublish} disabled={busy}>
+                  {article.published === false ? 'החזרה לשער' : 'הסתרה מהשער'}
+                </button>
+              </>
+            )}
           </div>
+          {editing && <p className="aside__hint">לוחצים על כל טקסט בכתבה ומשנים אותו ישירות.</p>}
+          <details className="source">
+            <summary className="mono">מקור הקלט</summary>
+            {article.source_input ? (
+              <p className="source__text">{article.source_input}</p>
+            ) : (
+              <p className="source__text source__text--empty">הכתבה הועברה מהגרסה הקודמת של המגזין, והמחשבה המקורית שלה לא נשמרה.</p>
+            )}
+          </details>
         </aside>
 
         <div className="text">
@@ -188,11 +212,11 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
             <Editable as="p" className="impact__text" editing={editing} value={a.pragmatic_action} onChange={(v) => set({ pragmatic_action: v })} />
           </motion.section>
 
-          {session.isAdmin && !editing && (
+          {!editing && (
             <div className="deepen">
               <span className="mono">העמקה ותהיות</span>
               <p>מה המאמר עורר? הכתבה הבאה בסדרה תענה על התהייה.</p>
-              <button type="button" className="btn" onClick={() => go(`/new/${article.root_id || article.id}`)}>
+              <button type="button" className="btn btn--line" onClick={() => go(`/new/${article.root_id || article.id}`)}>
                 כתיבת חלק {series.length + 1}
               </button>
             </div>
@@ -215,24 +239,6 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
         </div>
       </div>
 
-      {session.isAdmin && (
-        <div className="editbar" role="toolbar" aria-label="עריכה">
-          <span className="mono editbar__label">{editing ? 'מצב עריכה' : 'עריכה'}</span>
-          {editing ? (
-            <>
-              <button type="button" className="btn btn--small" onClick={save} disabled={busy}>שמירה</button>
-              <button type="button" className="btn btn--small btn--ghost" onClick={() => setEditing(false)} disabled={busy}>ביטול</button>
-            </>
-          ) : (
-            <>
-              <button type="button" className="btn btn--small" onClick={startEdit}>עריכת הכתבה</button>
-              <button type="button" className="btn btn--small btn--ghost" onClick={togglePublish} disabled={busy}>
-                {article.published === false ? 'פרסום' : 'הסתרה'}
-              </button>
-            </>
-          )}
-        </div>
-      )}
     </article>
   );
 }
