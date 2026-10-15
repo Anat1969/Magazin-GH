@@ -66,6 +66,7 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
         quote: draft.quote,
         sections: draft.sections,
         pragmatic_action: draft.pragmatic_action,
+        ...(article.root_id ? { bridge: draft.bridge || null } : { series_note: draft.series_note || null }),
         updated_at: new Date().toISOString(),
       })
       .eq('id', article.id);
@@ -146,7 +147,12 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
           )}
           {series.length > 1 && (
             <nav className="aside__series" aria-label="חלקי הסדרה">
-              <span className="mono">הסדרה</span>
+              <span className="mono">על הסדרה</span>
+              {article.root_id
+                ? series[0].series_note && <p className="aside__note">{series[0].series_note}</p>
+                : (a.series_note || editing) && (
+                    <Editable as="p" className="aside__note" editing={editing} value={a.series_note || ''} onChange={(v) => set({ series_note: v })} />
+                  )}
               <ol>
                 {series.map((p) => (
                   <li key={p.id} className={p.id === article.id ? 'is-current' : ''}>
@@ -165,6 +171,12 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
         </aside>
 
         <div className="text">
+          {article.root_id && (a.bridge || editing) && (
+            <div className="bridge">
+              <span className="mono kicker">מהחלק הקודם</span>
+              <Editable as="p" className="bridge__text" editing={editing} value={a.bridge || ''} onChange={(v) => set({ bridge: v })} />
+            </div>
+          )}
           {(a.sections || []).map((s, i) => (
             <motion.section
               key={i}
