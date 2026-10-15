@@ -18,7 +18,10 @@ const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SB_HEADERS = { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` };
 const BUCKET = "mahut-media";
 
+const TOPICS = ["אדריכלות ועיר", "צמצום", "רוח ומסורת", "בינה ומכונה", "מדע ותודעה", "אמנות ומוזיקה"];
+
 const BASE_PROPS = {
+  topic: { type: "string", enum: TOPICS },
   title: { type: "string" },
   subtitle: { type: "string" },
   quote: { type: "string" },
@@ -34,7 +37,7 @@ const BASE_PROPS = {
   pragmatic_action: { type: "string" },
   visual_prompt: { type: "string" },
 };
-const BASE_REQUIRED = ["title", "subtitle", "quote", "sections", "pragmatic_action", "visual_prompt"];
+const BASE_REQUIRED = ["topic", "title", "subtitle", "quote", "sections", "pragmatic_action", "visual_prompt"];
 const SCHEMA = { type: "object", additionalProperties: false, required: BASE_REQUIRED, properties: BASE_PROPS };
 const FOLLOW_SCHEMA = {
   type: "object",
@@ -45,6 +48,7 @@ const FOLLOW_SCHEMA = {
 
 const SYSTEM = `את/ה העורך/ת הראשי/ת של "המהות", מגזין עברי על אדריכלות, עיר, צמצום ורוח.
 מקבלים מחשבה גולמית ומזקקים אותה לכתבה אחת, כמו כפולת עמודים במגזין מודפס.
+- topic: אחד מהנושאים של המגזין: ${TOPICS.join(", ")}. בכתבת המשך, בדרך כלל אותו נושא כמו הסדרה.
 - title: כותרת קצרה וחזקה, 2 עד 5 מילים.
 - subtitle: משפט אחד שפותח את הרעיון.
 - quote: משפט אחד מתוך הכתבה, שאפשר לתלות על קיר.
@@ -178,6 +182,7 @@ Deno.serve(async (req) => {
     pragmatic_action: article.pragmatic_action,
     visual_prompt: article.visual_prompt,
     image_url,
+    topic: TOPICS.includes(String(article.topic)) ? article.topic : null,
     source_input: input,
     root_id: rootId,
     root_title: isFollow ? (series[0].root_title ?? series[0].title) : null,

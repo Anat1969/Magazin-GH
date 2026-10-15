@@ -5,24 +5,14 @@ import { supabase } from '../supabase';
 const DEV_CHAT = 'https://claude.ai/code/session_013fgYHhbtzo4AWySFtZDKu8';
 
 export default function TopBar({ route, session, onToast }) {
-  const [installEvt, setInstallEvt] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
   useEffect(() => {
-    const onPrompt = (e) => {
-      e.preventDefault();
-      setInstallEvt(e);
-    };
-    const onInstalled = () => setInstallEvt(null);
     const onScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener('beforeinstallprompt', onPrompt);
-    window.addEventListener('appinstalled', onInstalled);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt);
-      window.removeEventListener('appinstalled', onInstalled);
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
@@ -49,14 +39,6 @@ export default function TopBar({ route, session, onToast }) {
     } catch {
       onToast('לא הצלחתי להעתיק. הכתובת בשורת הדפדפן.');
     }
-  };
-
-  const install = async () => {
-    setOpen(false);
-    if (!installEvt) return;
-    installEvt.prompt();
-    await installEvt.userChoice.catch(() => null);
-    setInstallEvt(null);
   };
 
   const signOut = async () => {
@@ -89,7 +71,6 @@ export default function TopBar({ route, session, onToast }) {
             onClick={() => setOpen((o) => !o)}
           >
             <img src="/anat-logo.png" alt="" />
-            {installEvt && <span className="owner__dot" aria-hidden="true" />}
           </button>
           <AnimatePresence>
             {open && (
@@ -113,9 +94,6 @@ export default function TopBar({ route, session, onToast }) {
                 )}
                 <button role="menuitem" type="button" className="menu__item" onClick={copyLink}>העתקת קישור</button>
                 <a role="menuitem" className="menu__item" href={DEV_CHAT} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>שיחת הפיתוח</a>
-                {installEvt && (
-                  <button role="menuitem" type="button" className="menu__item menu__item--accent" onClick={install}>התקנת האפליקציה</button>
-                )}
                 <div className="menu__rule" />
                 {session.user ? (
                   <button role="menuitem" type="button" className="menu__item" onClick={signOut}>יציאה</button>

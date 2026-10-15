@@ -128,7 +128,7 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
           {article.root_id || series.length > 1 ? (
             <span className="mono kicker">חקירה מתמשכת · חלק {article.part_number || 1} מתוך {series.length}</span>
           ) : (
-            <span className="mono kicker">גיליון {nums[article.id]}</span>
+            <span className="mono kicker">גיליון {nums[article.id]}{article.topic ? ` · ${article.topic}` : ''}</span>
           )}
           <Editable as="h1" className="spread__title" editing={editing} value={a.title} onChange={(v) => set({ title: v })} />
           <Editable as="p" className="spread__sub" editing={editing} value={a.subtitle} onChange={(v) => set({ subtitle: v })} />

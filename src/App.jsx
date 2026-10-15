@@ -31,11 +31,11 @@ export default function App() {
   }, [route, articles]);
 
   const visible = session.isAdmin ? articles : articles.filter((a) => a.published !== false);
-  const key = route.page + (route.id || '') + (route.rootId || '');
+  const key = route.page + (route.id || '') + (route.rootId || '') + (route.topic || '');
 
   let page;
   if (route.page === 'article') page = <ArticlePage id={route.id} articles={visible} status={status} session={session} onToast={onToast} reload={reload} />;
-  else if (route.page === 'index') page = <IndexPage articles={visible} status={status} isAdmin={session.isAdmin} />;
+  else if (route.page === 'index') page = <IndexPage articles={visible} status={status} isAdmin={session.isAdmin} topic={route.topic} />;
   else if (route.page === 'compose') page = <Compose rootId={route.rootId} articles={visible} session={session} onToast={onToast} reload={reload} />;
   else if (route.page === 'login') page = <Login session={session} />;
   else page = <Home articles={visible} status={status} />;

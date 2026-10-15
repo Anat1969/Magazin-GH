@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
-import { formatDate, issueNumbers, readingMinutes } from '../data';
+import { formatDate, issueNumbers, readingMinutes, topicCounts } from '../data';
 import Cover from './Cover';
 
 const ease = [0.2, 0.7, 0.2, 1];
@@ -21,7 +21,6 @@ export default function Home({ articles, status }) {
   const { scrollYProgress } = useScroll({ target: coverRef, offset: ['start start', 'end start'] });
   const imgY = useTransform(scrollYProgress, [0, 1], ['0%', '16%']);
   const imgScale = useTransform(scrollYProgress, [0, 1], [1.06, 1.16]);
-  const mastY = useTransform(scrollYProgress, [0, 1], ['0%', '-40%']);
 
   if (status === 'loading') return <div className="state">טוען את הגיליון</div>;
   if (status === 'error') return <div className="state">לא הצלחתי לטעון את הכתבות. נסו לרענן.</div>;
@@ -30,9 +29,9 @@ export default function Home({ articles, status }) {
   const nums = issueNumbers(articles);
   const roots = articles.filter((a) => !a.root_id);
   const lead = roots[0] ?? articles[0];
-  const coverLines = roots.slice(1, 4);
+  const topics = topicCounts(articles);
   const series = roots.filter((r) => articles.some((a) => a.root_id === r.id));
-  const rest = roots.slice(4);
+  const rest = roots.slice(1);
   const first = articles[articles.length - 1];
 
   return (
@@ -44,54 +43,54 @@ export default function Home({ articles, status }) {
         </motion.div>
         <div className="cover__veil" />
         <div className="cover__grid" aria-hidden="true">
-          <span /><span /><span /><span />
+          <span /><span />
         </div>
 
-        <div className="cover__strip glass">
-          <span className="mono">מגזין הגות · אדריכלות, עיר, צמצום ורוח</span>
-          <span className="mono">גיליון {nums[lead.id]} · {formatDate(lead.created_at)}</span>
-        </div>
-
-        <motion.h1
-          className="cover__mast"
-          style={{ y: mastY }}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.4, ease }}
-        >
-          המהות
-        </motion.h1>
+        <header className="cover__top">
+          <motion.h1
+            className="cover__mast"
+            initial={{ opacity: 0, letterSpacing: '0.3em' }}
+            animate={{ opacity: 1, letterSpacing: '0.06em' }}
+            transition={{ duration: 1.6, ease }}
+          >
+            המהות
+          </motion.h1>
+          <span className="mono cover__meta">מגזין הגות · גיליון {nums[lead.id]} · {formatDate(lead.created_at)}</span>
+        </header>
 
         <motion.a
           href={`#/a/${lead.id}`}
-          className="cover__lead glass glass--strong"
-          initial={{ opacity: 0, y: 40 }}
+          className="cover__lead"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.1, delay: 0.35, ease }}
+          transition={{ duration: 1.1, delay: 0.3, ease }}
         >
-          <span className="mono kicker">סיפור השער</span>
+          <span className="mono kicker">סיפור השער{lead.topic ? ` · ${lead.topic}` : ''}</span>
           <h2 className="cover__title">{lead.title}</h2>
           <p className="cover__sub">{lead.subtitle}</p>
           <span className="mono cover__cta">לקריאה · {readingMinutes(lead)} דקות</span>
         </motion.a>
 
-        {coverLines.length > 0 && (
-          <motion.ol
-            className="cover__lines glass"
-            initial={{ opacity: 0, y: 40 }}
+        {topics.length > 0 && (
+          <motion.nav
+            className="cover__topics"
+            aria-label="נושאי המגזין"
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.1, delay: 0.55, ease }}
+            transition={{ duration: 1.1, delay: 0.5, ease }}
           >
-            <li className="mono cover__lines-head">בגיליון</li>
-            {coverLines.map((a) => (
-              <li key={a.id}>
-                <a href={`#/a/${a.id}`}>
-                  <span className="mono">{nums[a.id]}</span>
-                  <span className="cover__line-title">{a.title}</span>
-                </a>
-              </li>
-            ))}
-          </motion.ol>
+            <span className="mono cover__topics-head">הנושאים במגזין</span>
+            <ul>
+              {topics.map((t) => (
+                <li key={t.topic}>
+                  <a href={`#/index/${encodeURIComponent(t.topic)}`}>
+                    <span className="cover__topic">{t.topic}</span>
+                    <span className="mono">{t.count}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </motion.nav>
         )}
       </section>
 
@@ -174,7 +173,7 @@ export default function Home({ articles, status }) {
       {rest.length > 0 && (
         <section className="band">
           <header className="band__head">
-            <span className="mono">מהארכיון</span>
+            <span className="mono">עוד בגיליון</span>
             <span className="band__rule" />
             <a href="#/index" className="mono band__more">כל הגיליונות</a>
           </header>
