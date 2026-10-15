@@ -112,7 +112,8 @@ export default function Compose({ rootId, articles, onToast, reload }) {
 
   return (
     <div className="compose">
-      <header className="page-head">
+      <div className="compose__grid">
+      <header className="compose__head">
         <span className="mono kicker">{root ? `חקירה מתמשכת · חלק ${series.length + 1}` : 'עורך מגזין'}</span>
         <h1 className="page-head__title">{root ? root.title : 'ממחשבה לכתבה'}</h1>
         <p className="page-head__lead">
@@ -122,7 +123,6 @@ export default function Compose({ rootId, articles, onToast, reload }) {
         </p>
       </header>
 
-      <div className="compose__grid">
         <section className="compose__editor" aria-label="כתיבה">
           <>
               {!root && (

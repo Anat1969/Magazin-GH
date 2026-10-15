@@ -2,6 +2,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import { formatDate, issueNumbers, readingMinutes, topicCounts } from '../data';
 import Cover from './Cover';
+import ReadAloud from './ReadAloud';
 
 const ease = [0.2, 0.7, 0.2, 1];
 const rise = {
@@ -16,7 +17,7 @@ const STEPS = [
   ['פלט', 'כתבה מלאה: נושא, כותרת, ציטוט, פרקים, השפעה לעולם ותצלום. תהייה שהיא מעוררת הופכת לחלק הבא בסדרה.'],
 ];
 
-export default function Home({ articles, status }) {
+export default function Home({ articles, status, onToast }) {
   const coverRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: coverRef, offset: ['start start', 'end start'] });
   const imgY = useTransform(scrollYProgress, [0, 1], ['0%', '16%']);
@@ -28,10 +29,11 @@ export default function Home({ articles, status }) {
 
   const nums = issueNumbers(articles);
   const roots = articles.filter((a) => !a.root_id);
-  const lead = roots[0] ?? articles[0];
+  // The cover always carries the newest article, a follow-up part included.
+  const lead = articles[0];
   const topics = topicCounts(articles);
   const series = roots.filter((r) => articles.some((a) => a.root_id === r.id));
-  const rest = roots.slice(1);
+  const rest = roots.filter((r) => r.id !== lead.id);
   const first = articles[articles.length - 1];
 
   return (
@@ -62,18 +64,24 @@ export default function Home({ articles, status }) {
           </p>
         </header>
 
-        <motion.a
-          href={`#/a/${lead.id}`}
+        <motion.div
           className="cover__lead"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.1, delay: 0.3, ease }}
         >
-          <span className="mono kicker">סיפור השער{lead.topic ? ` · ${lead.topic}` : ''}</span>
-          <h2 className="cover__title">{lead.title}</h2>
+          <span className="mono kicker">
+            הגיליון האחרון{lead.root_id ? ` · חלק ${lead.part_number} בסדרה` : ''}{lead.topic ? ` · ${lead.topic}` : ''}
+          </span>
+          <a href={`#/a/${lead.id}`} className="cover__title-link">
+            <h2 className="cover__title">{lead.title}</h2>
+          </a>
           <p className="cover__sub">{lead.subtitle}</p>
-          <span className="mono cover__cta">לקריאה · {readingMinutes(lead)} דקות</span>
-        </motion.a>
+          <div className="cover__actions">
+            <a href={`#/a/${lead.id}`} className="mono cover__cta">לקריאה · {readingMinutes(lead)} דקות</a>
+            <ReadAloud title={lead.title} subtitle={lead.subtitle} onToast={onToast} />
+          </div>
+        </motion.div>
 
         {topics.length > 0 && (
           <motion.nav
@@ -115,7 +123,7 @@ export default function Home({ articles, status }) {
             <div><dt className="mono">סדרות</dt><dd>{series.length}</dd></div>
             <div><dt className="mono">מאז</dt><dd>{new Date(first.created_at).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}</dd></div>
           </motion.dl>
-          <motion.a href="#/new" className="btn about__cta" variants={rise} custom={4}>עורך מגזין</motion.a>
+          <motion.a href="#/new" className="btn btn--line about__cta" variants={rise} custom={4}>עורך מגזין</motion.a>
         </motion.div>
 
         <ol className="steps">
@@ -136,6 +144,36 @@ export default function Home({ articles, status }) {
             </motion.li>
           ))}
         </ol>
+      </section>
+
+      {/* ---------- Editor's note ---------- */}
+      <section className="editorial" aria-labelledby="editorial-title">
+        <header className="editorial__head">
+          <span className="mono kicker">דבר העורך</span>
+          <h2 id="editorial-title" className="editorial__title">שני קולות, כללים גלויים.</h2>
+          <p className="editorial__lead">
+            "המהות" נכתב בשני קולות: עורך שמזקק, וצלם שמראה. שניהם עובדים לפי כללים גלויים,
+            כדי שכל כתבה תשכנע מתוך המהות ולא מתוך קישוט.
+          </p>
+        </header>
+        <div className="editorial__voice">
+          <span className="mono">העורך · Claude</span>
+          <dl>
+            <div><dt>תפיסת עולם</dt><dd>מחשבה טובה היא מחשבה שאפשר לעמוד בתוכה. העורך מחפש את הטענה האחת שבתוך הרעיון, ובונה סביבה כפולת עמודים: כותרת, שלושה או ארבעה פרקים, ציטוט ופעולה.</dd></div>
+            <div><dt>מקורות המידע</dt><dd>נקודת המוצא היא הקלט של העורכת. סביבו העורך נשען על ידע מבוסס באדריכלות, תכנון עירוני, פילוסופיה ואמנות. הוא מזכיר רק אנשים, מבנים ויצירות אמיתיים, ולא ממציא ציטוטים או נתונים.</dd></div>
+            <div><dt>כללי כתיבה</dt><dd>עברית חיה ותקינה, דימוי מוחשי אחד בכל פרק, בלי קלישאות ובלי סימני קריאה.</dd></div>
+            <div><dt>כדי להשפיע</dt><dd>טענה אחת ברורה, הוכחה מוחשית, ופעולה אחת לשבוע הקרוב. שכנוע בלי פעולה נשאר קישוט.</dd></div>
+          </dl>
+        </div>
+        <div className="editorial__voice">
+          <span className="mono">הצלם · fal</span>
+          <dl>
+            <div><dt>תפיסת עולם</dt><dd>הצלם לא מאייר את הטקסט. הוא מצלם מרחב אחד שמגלם את הרעיון, כך שהתמונה תעמוד גם בלי הכתבה.</dd></div>
+            <div><dt>מה מאפיין את התמונות</dt><dd>תצלום אדריכלי תיעודי. אור טבעי רך והרבה חלל לבן. חומר אחד בולט, קנה מידה ברור וניגוד אחד. בלי אנשים בפוקוס ובלי טקסט.</dd></div>
+            <div><dt>בסיס הפרומפט</dt><dd><code dir="ltr">Documentary realism, professional architecture photography, high-key, airy, soft natural light, generous white space, no text.</code></dd></div>
+          </dl>
+        </div>
+        <p className="editorial__close">המהות לא מנסה להרשים. היא מנסה לשנות מבט: לקרוא כתבה, ולצאת ממנה עם פעולה אחת.</p>
       </section>
 
       {/* ---------- Series ---------- */}
