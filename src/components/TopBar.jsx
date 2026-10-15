@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../supabase';
 
 const DEV_CHAT = 'https://claude.ai/code/session_013fgYHhbtzo4AWySFtZDKu8';
 
@@ -39,11 +38,6 @@ export default function TopBar({ route, session, onToast }) {
     } catch {
       onToast('לא הצלחתי להעתיק. הכתובת בשורת הדפדפן.');
     }
-  };
-
-  const signOut = async () => {
-    setOpen(false);
-    await supabase.auth.signOut();
   };
 
   const active = (p) => (route.page === p ? 'is-active' : '');
@@ -86,20 +80,12 @@ export default function TopBar({ route, session, onToast }) {
                   <img src="/anat-logo.png" alt="" />
                   <div>
                     <strong>אד' ענת שטיבלמן</strong>
-                    <span className="mono muted">{session.user ? session.user.email : 'קריאה בלבד'}</span>
+                    <span className="mono muted">המהות · מגזין פתוח</span>
                   </div>
                 </div>
-                {session.isAdmin && (
-                  <a role="menuitem" href="#/new" className="menu__item">כתבה חדשה</a>
-                )}
+                <a role="menuitem" href="#/new" className="menu__item">כתבה חדשה</a>
                 <button role="menuitem" type="button" className="menu__item" onClick={copyLink}>העתקת קישור</button>
                 <a role="menuitem" className="menu__item" href={DEV_CHAT} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>שיחת הפיתוח</a>
-                <div className="menu__rule" />
-                {session.user ? (
-                  <button role="menuitem" type="button" className="menu__item" onClick={signOut}>יציאה</button>
-                ) : (
-                  <a role="menuitem" href="#/login" className="menu__item">כניסה לעורכת</a>
-                )}
               </motion.div>
             )}
           </AnimatePresence>

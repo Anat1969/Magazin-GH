@@ -8,7 +8,6 @@ export function parseHash() {
   if (page === 'a' && id) return { page: 'article', id };
   if (page === 'new') return { page: 'compose', rootId: id || null };
   if (page === 'index') return { page: 'index', topic: id || null };
-  if (page === 'login') return { page: 'login' };
   return { page: 'home' };
 }
 
@@ -28,29 +27,6 @@ export function useRoute() {
 export const go = (path) => {
   window.location.hash = path;
 };
-
-export function useSession() {
-  const [state, setState] = useState({ user: null, isAdmin: false, ready: false });
-  useEffect(() => {
-    let alive = true;
-    const resolve = async (session) => {
-      const user = session?.user ?? null;
-      let isAdmin = false;
-      if (user?.email) {
-        const { data } = await supabase.from('mahut_admins').select('email').ilike('email', user.email).maybeSingle();
-        isAdmin = !!data;
-      }
-      if (alive) setState({ user, isAdmin, ready: true });
-    };
-    supabase.auth.getSession().then(({ data }) => resolve(data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => resolve(session));
-    return () => {
-      alive = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-  return state;
-}
 
 export function useArticles() {
   const [articles, setArticles] = useState([]);

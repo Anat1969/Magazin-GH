@@ -16,9 +16,9 @@ const SEEDS = [
 
 const INPUTS = [
   ['מקור ההשראה', 'מחשבה של העורכת: תצפית בעיר, שאלה מהעבודה, משפט מספר, רגע מסיור או שיחה. משהו שעוד לא סודר.'],
-  ['קלט', 'טקסט חופשי, ממשפט אחד ועד כמה פסקאות. בכתבת המשך, הקלט הוא התהייה שהכתבה הקודמת עוררה.'],
-  ['העיבוד', 'Claude מזקק את המחשבה למבנה של כתבה, ו-fal מצלם עבורה תצלום אדריכלי. זה לוקח כדקה.'],
-  ['פלט', 'כתבה מלאה שמתפרסמת מיד במגזין, ואפשר לערוך, להסתיר או למחוק אותה מתוך הדף.'],
+  ['קלט', 'טקסט חופשי, ממשפט אחד ועד כמה פסקאות. כל אחד יכול לכתוב, בלי כניסה. בכתבת המשך, הקלט הוא התהייה שהכתבה הקודמת עוררה.'],
+  ['העיבוד', 'בלחיצה על הכפתור המואר, Claude מזקק את המחשבה למבנה של כתבה, ו-fal מצלם עבורה תצלום אדריכלי. זה לוקח כדקה.'],
+  ['פלט', 'כתבה מלאה שמתפרסמת מיד במגזין, ואפשר לערוך או להסתיר אותה מתוך הדף.'],
 ];
 
 const ANATOMY = [
@@ -61,7 +61,7 @@ function HowItWorks() {
   );
 }
 
-export default function Compose({ rootId, articles, session, onToast, reload }) {
+export default function Compose({ rootId, articles, onToast, reload }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState(0);
@@ -124,10 +124,7 @@ export default function Compose({ rootId, articles, session, onToast, reload }) 
 
       <div className="compose__grid">
         <section className="compose__editor" aria-label="כתיבה">
-          {!session.ready ? (
-            <div className="state">טוען</div>
-          ) : session.isAdmin ? (
-            <>
+          <>
               {!root && (
                 <div className="seeds">
                   <span className="mono">נקודות פתיחה</span>
@@ -150,19 +147,14 @@ export default function Compose({ rootId, articles, session, onToast, reload }) 
                 onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && submit()}
               />
               <div className="compose__actions">
-                <button type="button" className="btn" onClick={submit} disabled={!text.trim()}>
+                <button type="button" className="btn btn--key" onClick={submit} disabled={!text.trim()}>
                   {root ? 'כתיבת ההמשך' : 'זיקוק לכתבה'}
                 </button>
                 {root && <a className="link-btn" href={`#/a/${root.id}`}>חזרה לכתבה</a>}
                 <span className="mono muted">{text.trim() ? `${text.trim().split(/\s+/).length} מילים` : ''}</span>
               </div>
-            </>
-          ) : (
-            <div className="locked">
-              <p>יצירת כתבות פתוחה לעורכת המגזין. אחרי הכניסה יופיעו כאן שדה הכתיבה ונקודות פתיחה.</p>
-              <a className="btn" href="#/login">כניסה לעורכת</a>
-            </div>
-          )}
+              <p className="key-note"><span className="key-light" aria-hidden="true" /> האור מסמן את הפעולה שמפעילה את מפתחות ה-AI: Claude כותב, fal מצלם.</p>
+          </>
         </section>
         <HowItWorks />
       </div>

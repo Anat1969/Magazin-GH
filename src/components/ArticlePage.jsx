@@ -86,17 +86,6 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
     reload();
   };
 
-  const remove = async () => {
-    if (!window.confirm('למחוק את הכתבה לצמיתות?')) return;
-    setBusy(true);
-    const { error } = await supabase.from(TABLE).delete().eq('id', article.id);
-    setBusy(false);
-    if (error) return onToast('המחיקה נכשלה: ' + error.message);
-    onToast('הכתבה נמחקה');
-    await reload();
-    go('/index');
-  };
-
   const share = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -228,7 +217,7 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
 
       {session.isAdmin && (
         <div className="editbar" role="toolbar" aria-label="עריכה">
-          <span className="mono editbar__label">{editing ? 'מצב עריכה' : 'עורכת'}</span>
+          <span className="mono editbar__label">{editing ? 'מצב עריכה' : 'עריכה'}</span>
           {editing ? (
             <>
               <button type="button" className="btn btn--small" onClick={save} disabled={busy}>שמירה</button>
@@ -240,7 +229,6 @@ export default function ArticlePage({ id, articles, status, session, onToast, re
               <button type="button" className="btn btn--small btn--ghost" onClick={togglePublish} disabled={busy}>
                 {article.published === false ? 'פרסום' : 'הסתרה'}
               </button>
-              <button type="button" className="btn btn--small btn--danger" onClick={remove} disabled={busy}>מחיקה</button>
             </>
           )}
         </div>
