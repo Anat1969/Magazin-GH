@@ -6,6 +6,61 @@ import { supabase } from '../supabase';
 const PHASES = ['מזקק את המהות המילולית', 'בונה את מבנה הכתבה', 'מצלם את המרחב', 'מעמד את הכפולה'];
 const FOLLOW_PHASES = ['קושר קצוות של מחשבה', 'בונה גשר מהחלק הקודם', 'מצלם את המרחב', 'מעמד את הכפולה'];
 
+// Starting points the editor can click to fill the field.
+const SEEDS = [
+  ['תצפית מהעיר', 'בבוקר ראיתי חזית ישנה שכל חלונותיה נסגרו חוץ מאחד. דווקא החלון הפתוח היחיד גרם לכל הבניין להיראות חי.'],
+  ['שאלה מקצועית', 'למה כיכר ריקה מרגישה לפעמים מזמינה ולפעמים מאיימת? מה בכל זאת קובע את ההבדל?'],
+  ['משפט מספר', '"הפחות הוא יותר" נשמע כמו כלל עיצובי, אבל אולי הוא בעיקר כלל של קשב.'],
+  ['רגע אישי', 'סידרתי את שולחן העבודה והשארתי עליו רק עיפרון ודף. פתאום היה לי קל יותר להתחיל.'],
+];
+
+const INPUTS = [
+  ['מקור ההשראה', 'מחשבה של העורכת: תצפית בעיר, שאלה מהעבודה, משפט מספר, רגע מסיור או שיחה. משהו שעוד לא סודר.'],
+  ['קלט', 'טקסט חופשי, ממשפט אחד ועד כמה פסקאות. בכתבת המשך, הקלט הוא התהייה שהכתבה הקודמת עוררה.'],
+  ['העיבוד', 'Claude מזקק את המחשבה למבנה של כתבה, ו-fal מצלם עבורה תצלום אדריכלי. זה לוקח כדקה.'],
+  ['פלט', 'כתבה מלאה שמתפרסמת מיד במגזין, ואפשר לערוך, להסתיר או למחוק אותה מתוך הדף.'],
+];
+
+const ANATOMY = [
+  ['נושא', 'אחד משישת נושאי המגזין'],
+  ['כותרת וכותרת משנה', 'שם קצר ומשפט שפותח את הרעיון'],
+  ['ציטוט', 'משפט אחד לשוליים'],
+  ['3 עד 4 פרקים', 'כל פרק עם כותרת ודימוי מוחשי'],
+  ['השפעה לעולם', 'פעולה אחת לשבוע הקרוב'],
+  ['תצלום', 'תצלום אדריכלי שנוצר לכתבה'],
+  ['גשר והסבר סדרה', 'רק בכתבת המשך'],
+];
+
+function HowItWorks() {
+  return (
+    <aside className="how" aria-label="איך נוצרת כתבה">
+      <span className="mono kicker">איך נוצרת כתבה</span>
+      <ol className="how__flow">
+        {INPUTS.map(([title, text], i) => (
+          <li key={title}>
+            <span className="how__num">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div className="how__anatomy">
+        <span className="mono">מה יוצא: מבנה הכתבה</span>
+        <dl>
+          {ANATOMY.map(([k, v]) => (
+            <div key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </aside>
+  );
+}
+
 export default function Compose({ rootId, articles, session, onToast, reload }) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,15 +75,6 @@ export default function Compose({ rootId, articles, session, onToast, reload }) 
     const t = setInterval(() => setPhase((p) => Math.min(p + 1, phases.length - 1)), 9000);
     return () => clearInterval(t);
   }, [busy, phases.length]);
-
-  if (!session.ready) return <div className="state">טוען</div>;
-  if (!session.isAdmin) {
-    return (
-      <div className="state">
-        כתיבה פתוחה לעורכת המגזין בלבד. <a href="#/login">כניסה</a>
-      </div>
-    );
-  }
 
   const submit = async () => {
     const input = text.trim();
@@ -48,51 +94,78 @@ export default function Compose({ rootId, articles, session, onToast, reload }) 
     go(`/a/${data.article.id}`);
   };
 
+  if (busy) {
+    return (
+      <div className="compose">
+        <motion.div className="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div className="loading__arch" />
+          <AnimatePresence mode="wait">
+            <motion.p key={phase} className="loading__phase" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.6 }}>
+              {phases[phase]}
+            </motion.p>
+          </AnimatePresence>
+          <span className="mono muted">כתבה לוקחת כדקה</span>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="compose">
-      <AnimatePresence mode="wait">
-        {busy ? (
-          <motion.div key="loading" className="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="loading__arch" />
-            <AnimatePresence mode="wait">
-              <motion.p key={phase} className="loading__phase" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.6 }}>
-                {phases[phase]}
-              </motion.p>
-            </AnimatePresence>
-            <span className="mono muted">כתבה לוקחת כדקה</span>
-          </motion.div>
-        ) : (
-          <motion.div key="form" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <header className="page-head">
-              <span className="mono kicker">{root ? `חקירה מתמשכת · חלק ${series.length + 1}` : 'כתבה חדשה'}</span>
-              <h1 className="page-head__title">{root ? root.title : 'מחשבה גולמית'}</h1>
-              <p className="page-head__lead">
-                {root
-                  ? 'מה עורר בך החלק הקודם? כתבי את התהייה, והכתבה הבאה תמשיך ממנה.'
-                  : 'כתבי רעיון, תצפית או שאלה, בלי לסדר. המגזין יזקק אותם לכתבה עם צילום.'}
-              </p>
-            </header>
-            <textarea
-              className="composer"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={root ? 'התהייה שעלתה בי' : 'המחשבה שלי'}
-              rows={8}
-              aria-label="טקסט לכתבה"
-              onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && submit()}
-            />
-            <div className="compose__actions">
-              <button type="button" className="btn" onClick={submit} disabled={!text.trim()}>
-                {root ? 'כתיבת ההמשך' : 'זיקוק לכתבה'}
-              </button>
-              {root && (
-                <a className="link-btn" href={`#/a/${root.id}`}>חזרה לכתבה</a>
+      <header className="page-head">
+        <span className="mono kicker">{root ? `חקירה מתמשכת · חלק ${series.length + 1}` : 'עורך מגזין'}</span>
+        <h1 className="page-head__title">{root ? root.title : 'ממחשבה לכתבה'}</h1>
+        <p className="page-head__lead">
+          {root
+            ? 'מה עורר בך החלק הקודם? כתבי את התהייה, והכתבה הבאה תמשיך ממנה ותסביר את הגשר בין החלקים.'
+            : 'כאן נולדות הכתבות של "המהות". כותבים מחשבה גולמית, והעורך מזקק אותה לכתבה מצולמת שמתפרסמת במגזין.'}
+        </p>
+      </header>
+
+      <div className="compose__grid">
+        <section className="compose__editor" aria-label="כתיבה">
+          {!session.ready ? (
+            <div className="state">טוען</div>
+          ) : session.isAdmin ? (
+            <>
+              {!root && (
+                <div className="seeds">
+                  <span className="mono">נקודות פתיחה</span>
+                  <div className="seeds__list">
+                    {SEEDS.map(([label, seed]) => (
+                      <button key={label} type="button" className="seed" onClick={() => setText(seed)}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-              <span className="mono muted">{text.trim() ? `${text.trim().split(/\s+/).length} מילים` : ''}</span>
+              <textarea
+                className="composer"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={root ? 'התהייה שעלתה בי' : 'המחשבה שלי, כמו שהיא'}
+                rows={9}
+                aria-label="טקסט לכתבה"
+                onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && submit()}
+              />
+              <div className="compose__actions">
+                <button type="button" className="btn" onClick={submit} disabled={!text.trim()}>
+                  {root ? 'כתיבת ההמשך' : 'זיקוק לכתבה'}
+                </button>
+                {root && <a className="link-btn" href={`#/a/${root.id}`}>חזרה לכתבה</a>}
+                <span className="mono muted">{text.trim() ? `${text.trim().split(/\s+/).length} מילים` : ''}</span>
+              </div>
+            </>
+          ) : (
+            <div className="locked">
+              <p>יצירת כתבות פתוחה לעורכת המגזין. אחרי הכניסה יופיעו כאן שדה הכתיבה ונקודות פתיחה.</p>
+              <a className="btn" href="#/login">כניסה לעורכת</a>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </section>
+        <HowItWorks />
+      </div>
     </div>
   );
 }

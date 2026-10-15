@@ -10,10 +10,10 @@ const rise = {
 };
 
 const STEPS = [
-  ['מחשבה גולמית', 'רעיון, תצפית או שאלה, כפי שהם עולים. בלי סדר ובלי עריכה.'],
-  ['זיקוק', 'המחשבה מסודרת לכתבה: כותרת, שלושה או ארבעה פרקים, ציטוט ופעולה אחת לעולם.'],
-  ['צילום ופריסה', 'לכל כתבה נוצר תצלום אדריכלי משלה, והכול נפרש ככפולת עמודים.'],
-  ['העמקה', 'תהייה שעולה מכתבה הופכת לחלק הבא בסדרה, עם גשר שמסביר את המעבר.'],
+  ['השראה', 'תצפית בעיר, שאלה מהעבודה, משפט מספר או רגע מסיור. משהו שעוד לא סודר.'],
+  ['קלט', 'העורכת כותבת את המחשבה בעורך המגזין, ממשפט אחד ועד כמה פסקאות.'],
+  ['זיקוק וצילום', 'Claude מזקק את המחשבה למבנה של כתבה, ו-fal מצלם עבורה תצלום אדריכלי.'],
+  ['פלט', 'כתבה מלאה: נושא, כותרת, ציטוט, פרקים, השפעה לעולם ותצלום. תהייה שהיא מעוררת הופכת לחלק הבא בסדרה.'],
 ];
 
 export default function Home({ articles, status }) {
@@ -56,6 +56,10 @@ export default function Home({ articles, status }) {
             המהות
           </motion.h1>
           <span className="mono cover__meta">מגזין הגות · גיליון {nums[lead.id]} · {formatDate(lead.created_at)}</span>
+          <p className="cover__tagline">
+            מגזין הגות על אדריכלות, עיר, צמצום ורוח. מחשבה גולמית נכנסת, כתבה מצולמת יוצאת.
+            <a href="#/new" className="cover__editor">עורך מגזין</a>
+          </p>
         </header>
 
         <motion.a
@@ -111,6 +115,7 @@ export default function Home({ articles, status }) {
             <div><dt className="mono">סדרות</dt><dd>{series.length}</dd></div>
             <div><dt className="mono">מאז</dt><dd>{new Date(first.created_at).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' })}</dd></div>
           </motion.dl>
+          <motion.a href="#/new" className="btn about__cta" variants={rise} custom={4}>עורך מגזין</motion.a>
         </motion.div>
 
         <ol className="steps">
