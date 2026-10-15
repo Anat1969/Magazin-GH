@@ -1,18 +1,20 @@
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
-import { formatDate, issueNumbers } from '../data';
+import { formatDate, issueNumbers, topicCounts } from '../data';
 import Cover from './Cover';
 
-export default function IndexPage({ articles, status, isAdmin }) {
+export default function IndexPage({ articles, status, isAdmin, topic }) {
   const [q, setQ] = useState('');
   const nums = useMemo(() => issueNumbers(articles), [articles]);
+  const topics = useMemo(() => topicCounts(articles), [articles]);
   const list = useMemo(() => {
     const t = q.trim();
-    if (!t) return articles;
-    return articles.filter((a) =>
+    const byTopic = topic ? articles.filter((a) => a.topic === topic) : articles;
+    if (!t) return byTopic;
+    return byTopic.filter((a) =>
       [a.title, a.subtitle, a.quote, ...(a.sections || []).map((s) => s.heading + ' ' + s.content)].join(' ').includes(t)
     );
-  }, [q, articles]);
+  }, [q, articles, topic]);
 
   if (status === 'loading') return <div className="state">טוען</div>;
 
@@ -20,7 +22,15 @@ export default function IndexPage({ articles, status, isAdmin }) {
     <div className="index">
       <header className="page-head">
         <span className="mono kicker">ארכיון</span>
-        <h1 className="page-head__title">כל הגיליונות</h1>
+        <h1 className="page-head__title">{topic || 'כל הגיליונות'}</h1>
+        <nav className="topics" aria-label="סינון לפי נושא">
+          <a href="#/index" className={!topic ? 'is-active' : ''}>הכול</a>
+          {topics.map((t) => (
+            <a key={t.topic} href={`#/index/${encodeURIComponent(t.topic)}`} className={topic === t.topic ? 'is-active' : ''}>
+              {t.topic} <span className="mono">{t.count}</span>
+            </a>
+          ))}
+        </nav>
         <input
           className="search"
           type="search"
@@ -46,6 +56,7 @@ export default function IndexPage({ articles, status, isAdmin }) {
             <div className="tile__body">
               <span className="mono">
                 גיליון {nums[a.id]}
+                {a.topic ? ` · ${a.topic}` : ''}
                 {a.root_id ? ` · חלק ${a.part_number}` : ''}
                 {isAdmin && a.published === false ? ' · מוסתר' : ''}
               </span>

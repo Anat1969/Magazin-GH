@@ -7,7 +7,7 @@ export function parseHash() {
   const [page, id] = h.split('/');
   if (page === 'a' && id) return { page: 'article', id };
   if (page === 'new') return { page: 'compose', rootId: id || null };
-  if (page === 'index') return { page: 'index' };
+  if (page === 'index') return { page: 'index', topic: id || null };
   if (page === 'login') return { page: 'login' };
   return { page: 'home' };
 }
@@ -83,6 +83,12 @@ export function seriesOf(article, articles) {
   return articles
     .filter((a) => a.id === root || a.root_id === root)
     .sort((a, b) => (a.part_number || 1) - (b.part_number || 1));
+}
+
+export const TOPICS = ['אדריכלות ועיר', 'צמצום', 'רוח ומסורת', 'בינה ומכונה', 'מדע ותודעה', 'אמנות ומוזיקה'];
+
+export function topicCounts(articles) {
+  return TOPICS.map((t) => ({ topic: t, count: articles.filter((a) => a.topic === t).length })).filter((t) => t.count);
 }
 
 export const formatDate = (d) =>
