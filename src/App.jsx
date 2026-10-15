@@ -4,20 +4,17 @@ import ArticlePage from './components/ArticlePage';
 import Compose from './components/Compose';
 import Home from './components/Home';
 import IndexPage from './components/IndexPage';
-import Login from './components/Login';
 import TopBar from './components/TopBar';
-import { useArticles, useRoute, useSession } from './data';
+import { useArticles, useRoute } from './data';
+
+// Open magazine: no login, every visitor can write and edit (Anat's choice).
+const OPEN = { ready: true, isAdmin: true, user: null };
 
 export default function App() {
   const route = useRoute();
-  const session = useSession();
+  const session = OPEN;
   const { articles, status, reload } = useArticles();
   const [toast, setToast] = useState('');
-
-  // Admin sees hidden articles too (RLS returns them); reload once the role is known.
-  useEffect(() => {
-    if (session.ready) reload();
-  }, [session.ready, session.isAdmin, reload]);
 
   const onToast = useCallback((msg) => {
     setToast(msg);
@@ -30,15 +27,15 @@ export default function App() {
     document.title = a ? `${a.title} · המהות` : 'המהות';
   }, [route, articles]);
 
-  const visible = session.isAdmin ? articles : articles.filter((a) => a.published !== false);
+  const visible = articles;
+  const published = articles.filter((a) => a.published !== false);
   const key = route.page + (route.id || '') + (route.rootId || '') + (route.topic || '');
 
   let page;
   if (route.page === 'article') page = <ArticlePage id={route.id} articles={visible} status={status} session={session} onToast={onToast} reload={reload} />;
   else if (route.page === 'index') page = <IndexPage articles={visible} status={status} isAdmin={session.isAdmin} topic={route.topic} />;
   else if (route.page === 'compose') page = <Compose rootId={route.rootId} articles={visible} session={session} onToast={onToast} reload={reload} />;
-  else if (route.page === 'login') page = <Login session={session} />;
-  else page = <Home articles={visible} status={status} />;
+  else page = <Home articles={published} status={status} />;
 
   return (
     <>

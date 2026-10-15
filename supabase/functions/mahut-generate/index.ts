@@ -1,6 +1,7 @@
 // MAHUT (המהות) — turns a raw thought into a magazine article.
 // Text: Claude (ANTHROPIC_API_KEY). Image: fal.ai (FAL_API_KEY), copied into the
-// mahut-media bucket so it never expires. Admins only (mahut_admins by email).
+// mahut-media bucket so it never expires. Open to every visitor (Anat's choice),
+// capped at HOURLY_LIMIT articles per hour so the keys cannot be drained.
 // A follow-up also writes its bridge from the previous part and refreshes the
 // series note on the root article.
 import Anthropic from "npm:@anthropic-ai/sdk";
@@ -60,16 +61,16 @@ const SYSTEM = `את/ה העורך/ת הראשי/ת של "המהות", מגזי�
 - series_note: 2 עד 4 משפטים שמסבירים לקורא את הסדרה כולה, כולל החלק החדש: על מה כל חלק, ומה החוט שמחבר ביניהם.
 כותבים בגוף שלישי או בגוף ראשון רבים, לא בגוף שני מתחנחן.`;
 
-async function adminId(auth: string | null): Promise<string | null> {
-  if (!auth) return null;
-  const r = await fetch(`${SB_URL}/auth/v1/user`, { headers: { Authorization: auth, apikey: SERVICE } });
-  if (!r.ok) return null;
-  const user = await r.json();
-  const email = String(user?.email ?? "").toLowerCase();
-  if (!email) return null;
-  const q = await fetch(`${SB_URL}/rest/v1/mahut_admins?select=email&email=ilike.${encodeURIComponent(email)}`, { headers: SB_HEADERS });
-  const rows = q.ok ? await q.json() : [];
-  return rows.length ? user.id : null;
+const HOURLY_LIMIT = 20;
+
+async function createdLastHour(): Promise<number> {
+  const since = new Date(Date.now() - 3600_000).toISOString();
+  const r = await fetch(`${SB_URL}/rest/v1/mahut_articles?select=id&created_at=gte.${since}`, {
+    method: "HEAD",
+    headers: { ...SB_HEADERS, Prefer: "count=exact" },
+  });
+  const range = r.headers.get("content-range") ?? "";
+  return Number(range.split("/")[1]) || 0;
 }
 
 function falKey(): string | undefined {
@@ -120,8 +121,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  const userId = await adminId(req.headers.get("Authorization"));
-  if (!userId) return json({ error: "רק עורכת המגזין יכולה ליצור כתבות." }, 403);
+  if ((await createdLastHour()) >= HOURLY_LIMIT) {
+    return json({ error: "נוצרו הרבה כתבות בשעה האחרונה. נסו שוב מאוחר יותר." }, 429);
+  }
 
   let body: { input?: string; rootId?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
@@ -188,7 +190,6 @@ Deno.serve(async (req) => {
     root_title: isFollow ? (series[0].root_title ?? series[0].title) : null,
     part_number: isFollow ? series.length + 1 : 1,
     bridge: isFollow ? article.bridge : null,
-    created_by: userId,
   };
   const ins = await fetch(`${SB_URL}/rest/v1/mahut_articles`, {
     method: "POST",
