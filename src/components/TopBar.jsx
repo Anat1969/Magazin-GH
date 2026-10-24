@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const DEV_CHAT = 'https://claude.ai/code/session_013fgYHhbtzo4AWySFtZDKu8';
 
-// Everything technical about the app, shown in the owner's settings panel.
+// Everything technical about the app, shown in the tech card (opened from the A&I logo button).
 const TECH = [
   ['תוכנת מקור', 'Lovable · הפרויקט Essence Weaver. משם הועברו הקוד והכתבות'],
   ['בנייה', 'Claude Code · Vite, React, framer-motion'],
@@ -20,22 +20,11 @@ const TECH = [
   ['גישה', 'פתוחה לכולם, בלי כניסה. אין מחיקה, רק הסתרה'],
 ];
 
-function OwnerMark({ large = false }) {
-  return (
-    <span className={`owner-mark ${large ? 'owner-mark--large' : ''}`}>
-      <img src="/anat-logo.png" alt="" />
-      <span className="owner-mark__text">
-        <strong>ענת שטיבלמן</strong>
-        <span>אדריכלית</span>
-      </span>
-    </span>
-  );
-}
-
-export default function TopBar({ route, onToast }) {
+export default function TopBar({ route }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -57,15 +46,15 @@ export default function TopBar({ route, onToast }) {
 
   useEffect(() => setOpen(false), [route]);
 
-  const copyLink = async () => {
-    setOpen(false);
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      onToast('הקישור הועתק');
-    } catch {
-      onToast('לא הצלחתי להעתיק. הכתובת בשורת הדפדפן.');
-    }
-  };
+  // The A&I logo button holds copy link, dev chat, install, a new article and the tech card.
+  useEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+    el.items = [
+      { label: 'כתבה חדשה', onSelect: () => { window.location.hash = '#/new'; } },
+      { label: 'כרטיס טכני', pressed: open, onSelect: () => setOpen((o) => !o) },
+    ];
+  }, [open]);
 
   const active = (p) => (route.page === p ? 'is-active' : '');
 
@@ -83,36 +72,18 @@ export default function TopBar({ route, onToast }) {
         </nav>
 
         <div className="owner" ref={wrapRef}>
-          <button
-            type="button"
-            className={`owner__btn ${open ? 'is-open' : ''}`}
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            aria-label="הגדרות ומידע טכני"
-            onClick={() => setOpen((o) => !o)}
-          >
-            <OwnerMark />
-          </button>
+          <ai-menu ref={menuRef} chat={DEV_CHAT} />
           <AnimatePresence>
             {open && (
               <motion.div
                 className="menu"
                 role="dialog"
-                aria-label="הגדרות ומידע טכני"
+                aria-label="כרטיס טכני"
                 initial={{ opacity: 0, y: -8, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.98 }}
                 transition={{ duration: 0.22, ease: [0.2, 0.7, 0.2, 1] }}
               >
-                <div className="menu__head">
-                  <OwnerMark large />
-                  <span className="mono muted">המהות · מגזין פתוח</span>
-                </div>
-                <div className="menu__actions">
-                  <a href="#/new" className="menu__item">כתבה חדשה</a>
-                  <button type="button" className="menu__item" onClick={copyLink}>העתקת קישור</button>
-                  <a className="menu__item" href={DEV_CHAT} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>שיחת הפיתוח</a>
-                </div>
                 <div className="menu__tech">
                   <span className="mono">כרטיס טכני</span>
                   <dl>

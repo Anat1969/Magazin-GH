@@ -37,7 +37,7 @@ export default function App() {
 
   return (
     <>
-      <TopBar route={route} onToast={onToast} />
+      <TopBar route={route} />
       <AnimatePresence mode="wait">
         <motion.main key={key} className="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
           {page}
